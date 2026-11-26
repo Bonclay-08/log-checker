@@ -9,10 +9,7 @@ where = ["src"]
 name = "myapp"
 version = "0.1.0"
 requires-python = ">=3.10"
-dependencies = [
-    "flask>=3.0",
-    "pandas"
-]
+dependencies = ["flask", "pandas"]
 
 [tool.ruff]
 line-length = 88
@@ -23,8 +20,9 @@ src = ["src", "tests"]
 # N = naming, UP = modern syntax
 select = ["E", "W", "F", "I", "B", "N", "UP"]
 
+[tool.ruff.lint.isort]
+known-first-party = ["myapp"]
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
-[tool.ruff.lint.isort]
-known-first-party = ["myapp"]
