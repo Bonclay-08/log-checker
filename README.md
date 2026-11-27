@@ -15,6 +15,8 @@ A Python tool that reads login logs, detects attack patterns, and shows the resu
 | Success after failures | A login that works after a streak of failures from the same IP |
 
 It also uses pandas to find hours with unusually many failed logins (a z-score above 2) and to list the most targeted accounts.
+| Off-hours login | A successful login between 00:00 and 05:00 |
+| Account hopping | One account logging in from 3+ different IPs within 10 minutes |
 
 ## Features
 
@@ -25,6 +27,7 @@ It also uses pandas to find hours with unusually many failed logins (a z-score a
 - Fake log generator and real-time simulator for testing
 - Tests, linting and formatting checked on every push with GitHub Actions
 - Reads real OpenSSH logs (`Failed password` / `Accepted ...` lines)
+
 ## Setup (Windows)
 
 ```

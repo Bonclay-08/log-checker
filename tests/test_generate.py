@@ -23,3 +23,12 @@ def test_hidden_attacks_are_detected():
     assert ("brute_force", "198.51.100.23") in found
     assert ("password_spraying", "203.0.113.77") in found
     assert ("success_after_failures", "203.0.113.5") in found
+    assert ("off_hours_login", "203.0.113.5") in found
+    assert ("account_hopping", "203.0.113.200") in found
+
+
+def test_normal_users_do_not_trigger_off_hours_alerts():
+    events = [parse_line(line) for line in generate(500)]
+    alerts = run_all([e for e in events if e is not None])
+    off_hours_ips = {a.ip for a in alerts if a.kind == "off_hours_login"}
+    assert off_hours_ips == {"203.0.113.5"}

@@ -15,13 +15,13 @@ TARGETS = ["admin", "root", "guest", "test", "oracle", "postgres"]
 
 
 def normal_traffic(rng: random.Random, count: int) -> list[Event]:
-    """Everyday logins. Each user has one fixed IP and fails about 5% of the time."""
+    """Office-hours logins (07:00 to 19:00). Each user has one fixed IP."""
     events: list[Event] = []
     for _ in range(count):
         user = rng.choice(USERS)
         ip = f"10.0.1.{USERS.index(user) + 10}"
         status = "FAILED" if rng.random() < 0.05 else "SUCCESS"
-        when = START + timedelta(seconds=rng.randrange(24 * 3600))
+        when = START + timedelta(seconds=rng.randrange(7 * 3600, 19 * 3600))
         events.append((when, status, user, ip))
     return events
 
@@ -50,6 +50,16 @@ def spraying_attack(rng: random.Random, ip: str, start: datetime) -> list[Event]
     return events
 
 
+def hopping_attack(rng: random.Random, start: datetime) -> list[Event]:
+    """One account logging in from three different addresses within minutes."""
+    events: list[Event] = []
+    when = start
+    for ip in ("192.0.2.10", "198.51.100.50", "203.0.113.200"):
+        events.append((when, "SUCCESS", "grace", ip))
+        when += timedelta(seconds=rng.randint(60, 120))
+    return events
+
+
 def generate(count: int = 500, seed: int = 42) -> list[str]:
     """Return log lines, oldest first. The same seed always gives the same log."""
     rng = random.Random(seed)
@@ -61,6 +71,7 @@ def generate(count: int = 500, seed: int = 42) -> list[str]:
     events += brute_force_attack(
         rng, "198.51.100.23", START.replace(hour=22, minute=5), takes_over=False
     )
+    events += hopping_attack(rng, START.replace(hour=16, minute=45))
     events.sort(key=lambda e: e[0])
     return [
         f"{when.strftime(TIME_FORMAT)} {status} {user} {ip}"

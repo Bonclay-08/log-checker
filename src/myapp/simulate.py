@@ -22,14 +22,19 @@ def normal_entry(rng: random.Random) -> Entry:
 
 
 def attack_entries(rng: random.Random) -> list[Entry]:
-    """A burst of attack events from a random outside IP."""
-    ip = f"203.0.113.{rng.randint(1, 254)}"
-    if rng.random() < 0.5:
+    """A burst of attack events from outside IPs."""
+    roll = rng.random()
+    if roll < 0.4:
+        ip = f"203.0.113.{rng.randint(1, 254)}"
         burst = [("FAILED", "admin", ip)] * 8
         if rng.random() < 0.5:
             burst.append(("SUCCESS", "admin", ip))  # the attacker got in
         return burst
-    return [("FAILED", user, ip) for user in TARGETS]  # password spraying
+    if roll < 0.7:
+        ip = f"203.0.113.{rng.randint(1, 254)}"
+        return [("FAILED", user, ip) for user in TARGETS]  # password spraying
+    ends = rng.sample(range(1, 255), 3)  # one account, three different addresses
+    return [("SUCCESS", "grace", f"192.0.2.{end}") for end in ends]
 
 
 def entries(rng: random.Random, attack_every: int = 30) -> Iterator[Entry]:

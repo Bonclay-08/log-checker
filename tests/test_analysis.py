@@ -15,7 +15,7 @@ def make_frame(count=500, seed=42):
 
 def test_frame_has_one_row_per_event():
     df = make_frame()
-    assert len(df) == 523
+    assert len(df) == len(generate(500))
     assert list(df.columns) == ["timestamp", "success", "user", "ip"]
 
 

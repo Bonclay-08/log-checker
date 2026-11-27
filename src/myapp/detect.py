@@ -69,6 +69,60 @@ def success_after_failures(
     return alerts
 
 
+def off_hours_logins(
+    events: list[LoginEvent], start_hour: int = 0, end_hour: int = 5
+) -> list[Alert]:
+    """Flag successful logins in the small hours (default 00:00 to 04:59).
+
+    Each user and IP pair is reported once.
+    """
+    seen: set[tuple[str, str]] = set()
+    alerts: list[Alert] = []
+    for event in events:
+        in_window = start_hour <= event.timestamp.hour < end_hour
+        if not event.success or not in_window:
+            continue
+        key = (event.user, event.ip)
+        if key in seen:
+            continue
+        seen.add(key)
+        detail = f"{event.user} logged in at {event.timestamp:%H:%M}"
+        alerts.append(Alert("off_hours_login", event.ip, detail))
+    return alerts
+
+
+def account_hopping(
+    events: list[LoginEvent], min_ips: int = 3, window_minutes: int = 10
+) -> list[Alert]:
+    """Flag one account logging in successfully from several IPs within minutes.
+
+    A real person rarely moves between addresses that fast, so the account may
+    be in the hands of someone else. The alert shows the most recent IP.
+    """
+    window = timedelta(minutes=window_minutes)
+    logins_by_user: dict[str, list[LoginEvent]] = defaultdict(list)
+    for event in events:
+        if event.success:
+            logins_by_user[event.user].append(event)
+
+    alerts: list[Alert] = []
+    for user, logins in logins_by_user.items():
+        start = 0
+        peak = 0
+        last_ip = ""
+        for end in range(len(logins)):
+            while logins[end].timestamp - logins[start].timestamp > window:
+                start += 1
+            distinct = len({e.ip for e in logins[start : end + 1]})
+            if distinct > peak:
+                peak = distinct
+                last_ip = logins[end].ip
+        if peak >= min_ips:
+            detail = f"{user} logged in from {peak} IPs within {window_minutes} min"
+            alerts.append(Alert("account_hopping", last_ip, detail))
+    return sorted(alerts, key=lambda a: a.detail)
+
+
 def run_all(
     events: list[LoginEvent], max_failures: int = 5, window_seconds: int = 60
 ) -> list[Alert]:
@@ -77,4 +131,6 @@ def run_all(
         brute_force(events, max_failures, window_seconds)
         + password_spraying(events)
         + success_after_failures(events)
+        + off_hours_logins(events)
+        + account_hopping(events)
     )
