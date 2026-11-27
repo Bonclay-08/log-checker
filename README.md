@@ -24,7 +24,7 @@ It also uses pandas to find hours with unusually many failed logins (a z-score a
 - Live mode: watch a log file as it grows and alert as attacks happen
 - Fake log generator and real-time simulator for testing
 - Tests, linting and formatting checked on every push with GitHub Actions
-
+- Reads real OpenSSH logs (`Failed password` / `Accepted ...` lines)
 ## Setup (Windows)
 
 ```
@@ -112,4 +112,4 @@ python -m pytest
 
 - The web server only listens on your own computer (127.0.0.1) and limits uploads to 2 MB.
 - Database queries use placeholders to prevent SQL injection, and the live page never inserts log data as HTML.
-- Only the log format above is supported. Real systems such as Linux SSH logs or Windows Event logs would each need their own parser.
+- two logs formats are supported: the log format above and an ssh ("ssdh") as found in `/var/log/auth.log`. Other formats would need their own parser.
